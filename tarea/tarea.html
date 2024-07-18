@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de equipos de laboratorio</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .equipment-container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .equipment-button {
+            margin: 5px;
+            padding: 10px;
+            width: 120px;
+            height: 45px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            color: black;
+            position: relative;
+            transition: background-color 0.3s;
+            /* Transición suave del color de fondo */
+        }
+
+        .equipment-button:hover {
+            background-color: #777;
+            /* Cambia el color de fondo al pasar el mouse */
+        }
+
+        .info-popup {
+            position: absolute;
+            top: 100%;
+            width: 120px;
+            left: 0;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: none;
+            z-index: 1;
+        }
+
+        .equipment-button:hover .info-popup {
+            display: block;
+            /* Muestra el popup al pasar el mouse sobre el botón */
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .red {
+            background-color: red;
+        }
+
+        .gray {
+            background-color: gray;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Gestión de equipos de laboratorio</h1>
+
+    <div class="equipment-container" id="equipment-container"></div>
+    <div class="info-container" id="info-container"></div>
+
+    <script>
+        // Función para obtener datos de la computadora
+        async function fetchData(url) {
+            const response = await fetch(url);
+            return response.json();
+        }
+
+        // Función para actualizar el estado de la computadora
+        async function updateState(url, id, newState) {
+            try {
+                const response = await fetch(`${url}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ estado: newState })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error al realizar la solicitud. Código de estado: ${response.status}`);
+                }
+
+                // Intenta analizar la respuesta como JSON
+                try {
+                    const json = await response.json();
+                    return json;
+                } catch (jsonError) {
+                    console.error('Error al analizar la respuesta JSON:', jsonError.message);
+                    return null; // Devuelve null o maneja el error según sea necesario
+                }
+            } catch (error) {
+                // Captura y maneja cualquier error que ocurra durante la solicitud
+                console.error('Error en la solicitud:', error.message);
+                return null; // Devuelve null o maneja el error según sea necesario
+            }
+        }
+
+        // Función para crear un botón de equipo
+        function createButton(computer, state, clickHandler) {
+            const button = document.createElement('button');
+            button.classList.add('equipment-button');
+            button.dataset.id = computer.id;
+
+            const status = state ? state.estado : 'Fuera de servicio';
+            const statusClass = getStatusClass(status);
+            button.classList.add(statusClass);
+            button.innerText = `${status}`;
+
+            button.addEventListener('click', clickHandler.bind(null, button)); // Pasa el botón como parámetro
+
+            button.onmouseenter = () => {
+                const infoPopup = document.createElement('div');
+                infoPopup.classList.add('info-popup');
+                infoPopup.innerHTML = `
+        <p><strong>Número de Serie:</strong> ${computer.numeroserie}</p>
+        <p><strong>Marca:</strong> ${computer.marca}</p>
+        <p><strong>Con Mouse:</strong> ${computer.mouse}</p>
+        <p><strong>Con Teclado:</strong> ${computer.teclado}</p>
+        <p><strong>Estado:</strong> ${status}</p>
+    `;
+                button.appendChild(infoPopup);
+            };
+
+            button.onmouseleave = () => {
+                const infoPopup = button.querySelector('.info-popup');
+                if (infoPopup) {
+                    button.removeChild(infoPopup);
+                }
+            };
+
+            return button;
+        }
+
+        // Función auxiliar para obtener la clase correspondiente al estado
+        function getStatusClass(status) {
+            switch (status.toLowerCase()) {
+                case 'disponible':
+                    return 'green';
+                case 'no disponible':
+                    return 'red';
+                case 'fuera de servicio':
+                    return 'gray';
+                default:
+                    return 'gray'; // Manejar otros casos como fuera de servicio
+            }
+        }
+
+
+        // Función principal para cargar y mostrar los datos de la computadora
+        async function displayData() {
+            try {
+                const [inventoryData, stateData] = await Promise.all([
+                    fetchData('http://localhost/tarea/conexion.php'),
+                    fetchData('http://localhost/tarea/get.php')
+                ]);
+
+                const equipmentContainer = document.getElementById('equipment-container');
+                const infoContainer = document.getElementById('info-container');
+
+                let availableCount = 0;
+                let outOfServiceCount = 0;
+                let unavailableCount = 0;
+
+                inventoryData.forEach(computer => {
+                    const state = stateData.find(state => state.id === computer.id);
+                    console.log('Computer:', computer);
+                    console.log('State:', state);
+
+                    const clickHandler = async (clickedButton) => {
+                        console.log('Click Handler called');
+                        const newState = state && state.estado === 'Disponible' ? 'Fuera de servicio' : 'No disponible';
+                        const newClass = getStatusClass(newState);
+                        clickedButton.className = `equipment-button ${newClass}`;
+
+                        const response = await updateState('http://localhost/tarea/get.php', computer.id, newState);
+                        console.log(response);
+
+                        if (newState === 'Disponible') {
+                            availableCount++;
+                            outOfServiceCount--;
+                            unavailableCount--; // Restar uno para los equipos no disponibles
+                        } else if (newState === 'No disponible') {
+                            unavailableCount++;
+                            outOfServiceCount--;
+                            availableCount--; // Restar uno para los equipos disponibles
+                        } else {
+                            availableCount--;
+                            unavailableCount--;
+                            outOfServiceCount++;
+                        }
+
+
+                        infoContainer.innerHTML = `
+                    <p>Total de equipos: ${inventoryData.length}</p>
+                    <p>Equipos disponibles: ${availableCount}</p>
+                    <p>Equipos no disponibles: ${unavailableCount}</p>
+                    <p>Equipos fuera de servicio: ${outOfServiceCount}</p>
+                `;
+                    };
+
+                    const button = createButton(computer, state, clickHandler);
+                    equipmentContainer.appendChild(button);
+
+                    if (state && state.estado === 'Disponible') {
+                        availableCount++;
+                    } else if (state && state.estado === 'No disponible') {
+                        unavailableCount++;
+                    } else {
+                        outOfServiceCount++;
+                    }
+                });
+
+                infoContainer.innerHTML = `
+            <p>Total de equipos: ${inventoryData.length}</p>
+            <p>Equipos disponibles: ${availableCount}</p>
+            <p>Equipos no disponibles: ${unavailableCount}</p>
+            <p>Equipos fuera de servicio: ${outOfServiceCount}</p>
+        `;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Llamar a la función principal para comenzar
+        displayData();
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.equipment-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.equipment-button {
+    margin: 5px;
+    padding: 10px;
+    width: 100px;
+    height: 45px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    color: black;
+    position: relative;
+}
+
+.equipment-button:hover {
+    opacity: 0.8;
+    background-color: #ccc; /* Cambia el color de fondo al pasar el mouse */
+}
+
+.info-popup {
+    position: absolute;
+    top: 100%;
+    width: 120px;
+    left: 0;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1;
+}
+
+.equipment-button:hover .info-popup {
+    display: block; /* Muestra el popup al pasar el mouse sobre el botón */
+}

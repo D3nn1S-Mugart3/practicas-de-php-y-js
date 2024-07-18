@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Equipos de Laboratorio</title>
+    <style>
+        .btn {
+            margin: 5px;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            width: 100px;
+            height: 50px;
+        }
+        .btn.available {
+            background-color: green;
+        }
+        .btn.unavailable {
+            background-color: gray;
+        }
+        /* Estilos para resaltar el botón al pasar el mouse */
+        .btn:hover {
+            opacity: 0.8; /* Reducir la opacidad para dar un efecto de sombreado */
+        }
+        /* Estilos para el mouseover */
+        .info-popup {
+            position: absolute;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            display: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="buttons-container"></div>
+    <div id="info"></div>
+
+    <script>
+        function loadButtonsAndInfo() {
+            fetch('http://localhost/Practica5/php/conexion.php/ComputerInventory')
+            .then(response => response.json())
+            .then(computerInventoryData => {
+                fetch('http://localhost/Practica5/php/conexion.php/ComputerState')
+                .then(response => response.json())
+                .then(computerStateData => {
+                    const buttonsContainer = document.getElementById('buttons-container');
+                    buttonsContainer.innerHTML = '';
+
+                    computerInventoryData.forEach(computer => {
+                        const btn = document.createElement('button');
+                        btn.innerText = ` `;
+                        
+                        // Encontrar el estado correspondiente en ComputerState
+                        const computerState = computerStateData.find(state => state.ci_id === computer.ID);
+                        const estado = computerState ? computerState.estado : '';
+                        
+                        btn.className = `btn ${estado === 'Disponible' ? 'available' : 'unavailable'}`;
+                        btn.dataset.info = `Número PC: ${computer.numeroPC}\nNúmero de Serie: ${computer.numeroSerie}\nMarca: ${computer.marca}\nTeclado: ${computer.conTeclado ? 'Sí' : 'No'}\nMouse: ${computer.conMouse ? 'Sí' : 'No'}\nEstado: ${estado}`;
+                        btn.addEventListener('mouseover', () => showInfo(btn));
+                        btn.addEventListener('mouseout', () => hideInfo());
+                        buttonsContainer.appendChild(btn);
+                    });
+
+
+                    const info = document.getElementById('info');
+                    const totalPCs = computerInventoryData.length;
+                    const availablePCs = computerStateData.filter(state => state.estado === 'Disponible').length;
+                    const unavailablePCs = computerStateData.filter(state => state.estado === 'Fuera de servicio').length;
+                    
+                    info.innerHTML = `<strong>Total de PC: </strong>${totalPCs}<br>
+                                      <strong>Disponibles: </strong>${availablePCs}<br>
+                                      <strong>Fuera de servicio: </strong>${unavailablePCs}`;
+                });
+            });
+        }
+
+        function showInfo(btn) {
+            const infoPopup = document.createElement('div');
+            infoPopup.className = 'info-popup';
+            infoPopup.innerHTML = btn.dataset.info;
+            btn.appendChild(infoPopup);
+            infoPopup.style.display = 'block';
+        }
+
+        function hideInfo() {
+            const infoPopups = document.querySelectorAll('.info-popup');
+            infoPopups.forEach(popup => popup.style.display = 'none');
+        }
+
+        window.onload = loadButtonsAndInfo;
+    </script>
+</body>
+</html>

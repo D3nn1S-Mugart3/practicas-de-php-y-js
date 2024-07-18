@@ -1,0 +1,99 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.equipment-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-gap: 10px;
+}
+
+.escritorio-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 10px;
+    margin-top: 20px;
+    /* Ajusta el margen superior según sea necesario */
+    margin-bottom: 100px;
+    /* Agrega un margen inferior para dejar espacio para los escritorios */
+    justify-items: center;
+}
+
+.equipment-button {
+    background-color: transparent;
+    margin: 5px;
+    padding: 10px;
+    width: 105px;
+    height: 105px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    color: black;
+    position: relative;
+}
+
+.img-1 {
+    width: 25px;
+    height: 25px;
+}
+
+.escritorio {
+    width: 150px;
+    /* Aumenta el tamaño del escritorio */
+    height: 75px;
+    /* Aumenta el tamaño del escritorio */
+    background-color: transparent;
+    /* Cambia el color de fondo del escritorio a transparente */
+    border: 2px solid black;
+    /* Establece el borde del escritorio como negro */
+    border-radius: 8px;
+    /* Ajusta el radio del borde */
+    display: flex;
+    /* Centra el contenido verticalmente */
+    justify-content: center;
+    /* Centra el contenido horizontalmente */
+    align-items: center;
+    /* Centra el contenido verticalmente */
+}
+
+
+.equipment-button:hover {
+    opacity: 0.8;
+}
+
+.estado-disponible {
+    background-image: url('../img/computer.png');
+    background-size: cover;
+}
+
+.estado-ocupado {
+    background-image: url('../img/hacker.png');
+    background-size: cover;
+}
+
+.estado-fuera-de-servicio {
+    background-image: url('../img/troubleshooting.png');
+    background-size: cover;
+}
+
+.info-popup {
+    position: absolute;
+    top: 100%;
+    width: 120px;
+    left: 0;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    padding: 10px;
+    display: none;
+    z-index: 1;
+}
+
+.equipment-button:hover .info-popup {
+    display: block;
+}
